@@ -31,5 +31,4 @@ read -r -d '' TF_FILTER <<EOF
 }
 EOF
 
-# jq -f jq_filters/tfstate_to_inv.jq ${1:-terraform.tfstate} | yq -y
-jq "${TF_FILTER}" ${1:-./terraform/terraform.tfstate} | yq -y
+jq "${TF_FILTER}" ${1:-./terraform/terraform.tfstate}
