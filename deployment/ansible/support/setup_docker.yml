@@ -1,0 +1,56 @@
+- name: Install docker and docker-compose
+  hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+  - name: Install docker packages and other bits
+    apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+      state: present
+      update_cache: yes
+    tags:
+      - docker
+  - name: Add Docker official GPG key
+    apt_key:
+      url: https://download.docker.com/linux/debian/gpg
+      state: present
+    tags:
+      - docker
+  - name: Verify that we have the key with the fingerprint
+    apt_key:
+      id: 0EBFCD88
+      state: present
+    tags:
+      - docker
+  - name: Set up the stable repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/debian buster stable
+      state: present
+      update_cache: yes
+    tags:
+      - docker
+  - name: Update apt packages
+    apt:
+      update_cache: yes
+    tags:
+      - docker
+  - name: Install docker
+    apt:
+      name:
+        - containerd.io
+        - docker-ce
+        - docker-ce-cli
+      state: present
+      update_cache: yes
+    #notify: Start docker on boot
+    tags:
+      - docker
+  - name: Install docker-compose
+    get_url: 
+      url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+      dest: /usr/local/bin/docker-compose
+      mode: 'u+x,g+x'

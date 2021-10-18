@@ -1,0 +1,67 @@
+- name: Install docker-stack pre-reqs, copy app to all nodes
+  hosts: all
+  become: yes
+  tasks:
+    - name: install docker cmd prereqs
+      pip:
+        name:
+          - jsondiff
+          - pyyaml
+    - name: install rsync prereq
+      apt:
+        name:
+          - rsync
+        state: present
+        update_cache: yes
+    # - name: Move docker-compose to target
+    #   copy:
+    #     src: ../stack/
+    #     dest: /stack
+    - name: Sync app stack with target
+      ansible.posix.synchronize:
+        src: ../stack/
+        dest: /stack
+
+- name: Create local registry, build custom images, deploy stack
+  hosts: manager
+  become: yes
+  tasks:
+    - name: Start registry service
+      docker_swarm_service:
+        name: registry
+        image: registry:2
+        publish:
+          - target_port: 5000
+            published_port: 5000
+            
+    # - name: Build time-app
+    #   shell: docker build -t 127.0.0.1:5000/time-app /stack/time-app
+    # - name: Push time-app to local registry
+    #   shell: docker push 127.0.0.1:5000/time-app
+
+    - name: Build and push time-app to our local registry
+      community.docker.docker_image:
+        build:
+          path: /stack/time-app
+        name: 127.0.0.1:5000/time-app
+        tag: latest
+        push: yes
+        source: build
+
+    - name: Deploy stack from a compose file
+      docker_stack:
+        state: present
+        name: mystack
+        compose:
+          - /stack/docker-compose.yml
+
+    # - name: Get running services
+    #   when: inventory_hostname in groups['manager']
+    #   shell: |
+    #     docker service ls
+    #   register: service_ls_result
+    # - name: Show services
+    #   when: inventory_hostname in groups['manager']
+    #   debug:
+    #     msg: |
+    #       Services: {{ hostvars[groups['manager'][0]]['service_ls_result'].stdout }}

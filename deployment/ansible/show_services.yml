@@ -1,0 +1,16 @@
+---
+- name: Display running services (from manager's perspective)
+  hosts: manager
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Get running services
+      when: inventory_hostname in groups['manager']
+      shell: |
+        docker service ls
+      register: service_ls_result
+    - name: Show services
+      when: inventory_hostname in groups['manager']
+      debug:
+        msg: |
+          Services: {{ hostvars[groups['manager'][0]]['service_ls_result'].stdout }}

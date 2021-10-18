@@ -1,0 +1,83 @@
+---
+- name: Perform initial host setup
+  hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+  - name: Wait for hosts to come online
+    wait_for_connection:
+      timeout: 800
+  - name: Install core packages, monitoring
+    script: ./scripts/startup_vm_lite.sh
+  - name: Wait for setup script to complete
+    wait_for:
+      path: /etc/startup_was_launched
+
+- name: Run docker setup
+  become: yes
+  import_playbook: support/setup_docker.yml
+
+- name: Add os-login user to docker group
+  hosts: all
+  become: yes
+  tasks:
+  - name: adding existing user falquaddoomi_gmail_com' to group sudo
+    user:
+      name: falquaddoomi_gmail_com
+      groups: docker
+      append: yes
+
+- name: Init swarm on manager and join on clients
+  hosts: all
+  become: yes
+  tasks:
+    # - name: Install python
+    #   apt:
+    #     name:
+    #       - python3
+    #       - python3-pip
+    #       - python-setuptools
+    #     state: present
+    #     update_cache: yes
+    # - name: Install docker-swarm python reqs
+    #   pip:
+    #     name: docker
+
+    - name: Get manager IP
+      when: inventory_hostname in groups['manager']
+      shell: hostname -I | cut -d ' ' -f 1
+      register: manager_ip
+
+    - name: Init a new swarm with default parameters
+      when: inventory_hostname in groups['manager']
+      community.general.docker_swarm:
+        state: present
+      register: init_result
+
+    - name: Print info from manager
+      debug:
+        msg: |
+          Manager IP: {{ hostvars[groups['manager'][0]]['manager_ip'].stdout }}
+          Join Token: {{ hostvars[groups['manager'][0]]['init_result']['swarm_facts']['JoinTokens']['Worker'] }}
+
+    - name: Add nodes
+      when: inventory_hostname in groups['client']
+      community.general.docker_swarm:
+        state: join
+        remote_addrs: "{{ hostvars[groups['manager'][0]]['manager_ip'].stdout }}"
+        join_token: "{{ hostvars[groups['manager'][0]]['init_result']['swarm_facts']['JoinTokens']['Worker'] }}"
+
+    - name: Run docker node ls
+      when: inventory_hostname in groups['manager']
+      shell: |
+        docker node ls
+      register: node_ls_result
+
+    - name: Print docker node info
+      when: inventory_hostname in groups['manager']
+      debug:
+        msg: |
+          Nodes: {{ hostvars[groups['manager'][0]]['node_ls_result'].stdout }}
+        
+- name: Deploy swarm app
+  import_playbook: setup_dc_app.yml

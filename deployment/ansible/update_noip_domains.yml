@@ -1,0 +1,14 @@
+---
+- name: Update No-IP domain names
+  hosts: localhost
+  vars:
+    NOIP_BALANCER_HOST: "monarch-gc-balanced.ddns.net"
+  tasks:
+  # - name: Show update URL
+  #   debug:
+  #     msg: "http://dynupdate.no-ip.com/nic/update?hostname={{ NOIP_BALANCER_HOST }}&myip={{ vars.outputs.balancer_address }}"
+  - name: Update No-IP 
+    uri:
+      url: http://dynupdate.no-ip.com/nic/update?hostname={{ NOIP_BALANCER_HOST }}&myip={{ vars.outputs.balancer_address }}
+      user: "{{ NOIP_USER }}"
+      password: "{{ NOIP_PASSWORD}}"

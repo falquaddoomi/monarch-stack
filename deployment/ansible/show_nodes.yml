@@ -1,0 +1,15 @@
+---
+- name: Display running services (from manager's perspective)
+  hosts: manager
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Run docker node ls
+      shell: |
+        docker node ls
+      register: node_ls_result
+
+    - name: Print docker node info
+      debug:
+        msg: |
+          Nodes: {{ hostvars[groups['manager'][0]]['node_ls_result'].stdout }}
