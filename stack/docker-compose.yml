@@ -1,6 +1,10 @@
 version: "3.8"
-services:
 
+volumes:
+  sg-data-logs:
+  sg-onto-logs:
+
+services:
   solr:
     image: solr:6.6-slim 
     ports:
@@ -21,7 +25,7 @@ services:
     deploy:
       placement:
         constraints:
-          - "node.labels.app_type==solr_plus"
+          - "node.labels.solr_svc == true"
       resources:
         reservations:
           memory: 12G
@@ -33,6 +37,7 @@ services:
     volumes:
       - "${DATADIR}/scigraph-data/data:/data"
       - "${DATADIR}/scigraph-data/conf:/scigraph/conf"
+      - "/tmp/sg-data:/data/graph/logs" # maps log folder to writeable loc since DATADIR is read-only
     restart: "unless-stopped"
     command: "start-scigraph-service scigraph-data.yaml"
     healthcheck:
@@ -44,7 +49,7 @@ services:
     deploy:
       placement:
         constraints:
-          - "node.labels.app_type==scigraph"
+          - "node.labels.scigraph-data_svc == true"
       resources:
         reservations:
           memory: 6G
@@ -56,6 +61,7 @@ services:
     volumes:
       - "${DATADIR}/scigraph-ontology/data:/data"
       - "${DATADIR}/scigraph-ontology/conf:/scigraph/conf"
+      - "/tmp/sg-onto:/data/graph/logs" # maps log folder to writeable loc since DATADIR is read-only
     restart: "unless-stopped"
     command: "start-scigraph-service scigraph-ontology.yaml"
     healthcheck:
@@ -67,7 +73,7 @@ services:
     deploy:
       placement:
         constraints:
-          - "node.labels.app_type==scigraph"
+          - "node.labels.scigraph-ontology_svc == true"
       resources:
         reservations:
           memory: 6G
@@ -89,7 +95,7 @@ services:
     deploy:
       placement:
         constraints:
-          - "node.labels.app_type==owlsim"
+          - "node.labels.owlsim_svc == true"
       resources:
         reservations:
           memory: 59G
@@ -110,7 +116,7 @@ services:
     deploy:
       placement:
         constraints:
-          - "node.labels.app_type==solr_plus"
+          - "node.labels.biolink_svc == true"
   
   monarch-ui:
     image: monarchinitiative/nginx:1.18.0
@@ -130,10 +136,10 @@ services:
     deploy:
       placement:
         constraints:
-          - "node.labels.app_type==solr_plus"
+          - "node.labels.biolink_svc == true"
 
   balancer:
-    image: balancer:0.0.3
+    image: 127.0.0.1:5015/balancer:0.0.3
     volumes:
       - "/etc/letsencrypt:/etc/letsencrypt"
     ports:
