@@ -95,7 +95,7 @@ services:
           memory: 45G
 
   biolink:
-    image: falquaddoomi/biolink-api:v1.1.10 # monarchinitiative/biolink-api:v1.1.10
+    image: monarchinitiative/biolink-api:1.1.13
     ports:
       - "5000:5000"
     volumes:
