@@ -82,7 +82,7 @@ variable "virtual_machines" {
     }
 
     tf-monarch-owlsim = { 
-      machine_type = "e2-custom-6-49152"
+      machine_type = "e2-highmem-8"
       role = "worker"
       services = ["owlsim"]
     }

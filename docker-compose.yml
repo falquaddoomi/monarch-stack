@@ -79,7 +79,7 @@ services:
     volumes:
       - "${DATADIR}/owlsim:/data"
     restart: "unless-stopped"
-    command: "/bin/sh -c 'export OWLTOOLS_MEMORY=45G && owltools /data/all.owl --use-fsim  --sim-load-lcs-cache /data/owlsim.cache --sim-load-ic-cache /data/ic-cache.owl --start-sim-server -p 9031'"
+    command: "/bin/sh -c 'export OWLTOOLS_MEMORY=59G && owltools /data/all.owl --use-fsim  --sim-load-lcs-cache /data/owlsim.cache --sim-load-ic-cache /data/ic-cache.owl --start-sim-server -p 9031'"
     # healthcheck:
     #   test: "curl -f localhost:9031/getAttributeInformationProfile || exit 1"
     #   interval: 2m
@@ -92,7 +92,7 @@ services:
           - "node.labels.app_type==owlsim"
       resources:
         reservations:
-          memory: 45G
+          memory: 59G
 
   biolink:
     image: monarchinitiative/biolink-api:1.1.14
