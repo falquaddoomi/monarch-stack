@@ -8,40 +8,41 @@
     wait_for_connection:
       timeout: 800
   - name: Install core packages, monitoring
-    script: ./scripts/startup_vm_lite.sh
+    script: ./init_scripts/startup_vm_lite.sh
   - name: Wait for setup script to complete
     wait_for:
       path: /etc/startup_was_launched
+  - name: Create /srv/monarch mountpoint
+    ansible.builtin.file:
+        path: /srv/monarch
+        state: directory
+  - name: Mount /srv/monarch
+    ansible.posix.mount:
+      path: /srv/monarch
+      src: /dev/disk/by-id/google-monarch-data
+      fstype: ext4
+      opts: ro
+      state: mounted
 
 - name: Run docker setup
   become: yes
   import_playbook: support/setup_docker.yml
 
-- name: Add os-login user to docker group
-  hosts: all
-  become: yes
-  tasks:
-  - name: adding existing user falquaddoomi_gmail_com' to group sudo
-    user:
-      name: falquaddoomi_gmail_com
-      groups: docker
-      append: yes
-
 - name: Init swarm on manager and join on clients
   hosts: all
   become: yes
   tasks:
-    # - name: Install python
-    #   apt:
-    #     name:
-    #       - python3
-    #       - python3-pip
-    #       - python-setuptools
-    #     state: present
-    #     update_cache: yes
-    # - name: Install docker-swarm python reqs
-    #   pip:
-    #     name: docker
+    - name: Install python
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python-setuptools
+        state: present
+        update_cache: yes
+    - name: Install docker-swarm python reqs
+      pip:
+        name: docker
 
     - name: Get manager IP
       when: inventory_hostname in groups['manager']
@@ -61,7 +62,7 @@
           Join Token: {{ hostvars[groups['manager'][0]]['init_result']['swarm_facts']['JoinTokens']['Worker'] }}
 
     - name: Add nodes
-      when: inventory_hostname in groups['client']
+      when: inventory_hostname in groups['worker']
       community.general.docker_swarm:
         state: join
         remote_addrs: "{{ hostvars[groups['manager'][0]]['manager_ip'].stdout }}"
@@ -78,6 +79,14 @@
       debug:
         msg: |
           Nodes: {{ hostvars[groups['manager'][0]]['node_ls_result'].stdout }}
-        
+
+- name: Annotate each node with its role
+  hosts: manager
+  become: yes
+  tasks:
+    - shell: |
+        docker node update --label-add {{ item.1 }}_svc=true {{ item.0.key }}
+      loop: "{{ hostvars | dict2items | subelements('value.vars.services') }}"
+
 - name: Deploy swarm app
-  import_playbook: setup_dc_app.yml
+  import_playbook: setup_monarch_app.yml

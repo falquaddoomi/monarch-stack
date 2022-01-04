@@ -28,7 +28,7 @@ resource "google_compute_instance" "nodes" {
 
   metadata = {
       # startup-script = "${data.template_file.default.rendered}"
-      enable-oslogin = true
+      # enable-oslogin = true
       role = each.value.role
       services = jsonencode(each.value.services)
   }
