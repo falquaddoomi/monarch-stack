@@ -16,13 +16,14 @@ variable "node_image" {
 resource "google_compute_instance" "nodes" {
   for_each = var.virtual_machines
 
-  name         = each.key
+  name         = "${var.machine_prefix}${each.key}"
   machine_type = each.value.machine_type
   # tags = ["http-server"]
 
   boot_disk {
     initialize_params {
       image = var.node_image
+      size = try(each.value.disk_size_gb, 10)
     }
   }
 
@@ -30,7 +31,7 @@ resource "google_compute_instance" "nodes" {
       # startup-script = "${data.template_file.default.rendered}"
       # enable-oslogin = true
       role = each.value.role
-      services = jsonencode(each.value.services)
+      services = jsonencode(try(each.value.services, []))
   }
 
   network_interface {

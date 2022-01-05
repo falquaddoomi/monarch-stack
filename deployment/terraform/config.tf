@@ -44,6 +44,10 @@ variable "base_domain" {
   default = "monarch-gcp-balanced.ddns.net"
 }
 
+variable "machine_prefix" {
+  default = "tf-monarch-"
+}
+
 variable "services" {
   default = {
     "biolink" = {
@@ -85,18 +89,21 @@ variable "virtual_machines" {
       machine_type = "e2-highmem-8"
       role = "worker"
       services = ["owlsim"]
+      disk_size_gb = 20
     }
 
     tf-monarch-scigraph = { 
       machine_type = "e2-highmem-2"
       role = "worker"
       services = ["scigraph-data", "scigraph-ontology"]
+      disk_size_gb = 90
     }
 
     tf-monarch-solr = { 
       machine_type = "e2-standard-4"
       role = "worker"
       services = ["solr", "biolink"]
+      disk_size_gb = 160
     }
   }
 }
