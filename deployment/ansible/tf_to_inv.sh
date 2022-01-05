@@ -39,7 +39,11 @@ read -r -d '' TF_FILTER <<EOF
             name: .attributes.name,
             ip: .attributes.network_interface[].access_config[].nat_ip,
             role: .attributes.metadata.role,
-            services: .attributes.metadata.services | fromjson
+            services: (
+                if has(".attributes.metadata.services")
+                then .attributes.metadata.services | fromjson
+                else [] end
+            )
         }
     ],
     outputs: .outputs
@@ -66,7 +70,7 @@ read -r -d '' TF_FILTER <<EOF
 } * (
     [
         .hosts | group_by(.role) | .[] | {
-            (.[0].role): {
+            (.[0] | (if has("role") and .role != null then .role else "_ungrouped_" end)): {
                 hosts: [ .[] | .name ]
             }
         }
