@@ -12,17 +12,6 @@
   - name: Wait for setup script to complete
     wait_for:
       path: /etc/startup_was_launched
-  - name: Create /srv/monarch mountpoint
-    ansible.builtin.file:
-        path: /srv/monarch
-        state: directory
-  - name: Mount /srv/monarch
-    ansible.posix.mount:
-      path: /srv/monarch
-      src: /dev/disk/by-id/google-monarch-data
-      fstype: ext4
-      opts: ro
-      state: mounted
 
 - name: Run docker setup
   become: yes
@@ -61,6 +50,13 @@
           Manager IP: {{ hostvars[groups['manager'][0]]['manager_ip'].stdout }}
           Join Token: {{ hostvars[groups['manager'][0]]['init_result']['swarm_facts']['JoinTokens']['Worker'] }}
 
+    - name: Show worker, manager node groups
+      debug:
+        msg: |
+          Me: {{ inventory_hostname }}
+          Workers: {{groups['worker']}}
+          Managers: {{groups['manager']}}
+    
     - name: Add nodes
       when: inventory_hostname in groups['worker']
       community.general.docker_swarm:
@@ -80,11 +76,12 @@
         msg: |
           Nodes: {{ hostvars[groups['manager'][0]]['node_ls_result'].stdout }}
 
-- name: Annotate each node with its role
+- name: Annotate each node with its services
   hosts: manager
   become: yes
   tasks:
-    - shell: |
+    - name: Annotate nodes
+      shell: |
         docker node update --label-add {{ item.1 }}_svc=true {{ item.0.key }}
       loop: "{{ hostvars | dict2items | subelements('value.vars.services') }}"
 

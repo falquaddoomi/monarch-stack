@@ -12,10 +12,10 @@ rm -rf /etc/startup_was_launched
 echo $(date) > /etc/startup_began
 
 # # install packages that ansible, building other stuff, relies upon
-# sudo apt-get -qq update && \
-# sudo apt-get -qq install -y \
-#   lsb-release bash-completion build-essential locales \
-#   python3-minimal python3-setuptools python3-pip
+sudo apt-get -qq update && \
+sudo apt-get -qq install -y \
+  lsb-release bash-completion build-essential locales \
+  python3-minimal python3-setuptools python3-pip
 
 # # fix locale issues
 # LANG=en_US.UTF-8

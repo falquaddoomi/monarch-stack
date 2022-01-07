@@ -7,16 +7,47 @@
         name:
           - jsondiff
           - pyyaml
-    - name: install rsync prereq
+    - name: install system prereqs
       apt:
         name:
           - rsync
+          - gcc
+          - pigz
+          - wget
         state: present
         update_cache: yes
     - name: Sync app stack with target
       ansible.posix.synchronize:
         src: ../../stack/
         dest: /stack
+
+- name: Sync data for each service to /srv/monarch
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create /srv/monarch folder
+    ansible.builtin.file:
+        path: /srv/monarch/data
+        state: directory
+  - name: Use Makefile targets for services to populate /srv/monarch
+    vars:
+      service_to_maketarget:
+        "scigraph-data": "fetch_scigraph_data"
+        "scigraph-ontology": "fetch_scigraph_ontology"
+        "solr": "fetch_solr"
+        "owlsim": "fetch_owlsim"
+        "ui": "fetch_ui"
+    when: hostvars[inventory_hostname].vars.services | length > 0
+    shell:
+      chdir: /srv/monarch
+      cmd: |
+        DATADIR=/srv/monarch make -f /stack/Makefile {{
+          hostvars[inventory_hostname].vars.services
+            | intersect(service_to_maketarget.keys())
+            | map('extract', vars.service_to_maketarget)
+            | join(" ")
+        }}
+
 
 - name: Ensure we have docker access to each machine
   hosts: localhost
