@@ -75,7 +75,7 @@ $(MONARCH_UI):
 	chgrp $(MONARCH_GID) $@
 
 $(OWLSIM_FILES):
-	mkdir $(DATADIR)/owlsim-new
+	mkdir --parents $(DATADIR)/owlsim-new
 	cd $(DATADIR)/owlsim-new && $(WGET) $(ARCHIVE)/owlsim/all.owl
 	cd $(DATADIR)/owlsim-new && $(WGET) $(ARCHIVE)/owlsim/ic-cache.owl
 	cd $(DATADIR)/owlsim-new && $(WGET) $(ARCHIVE)/owlsim/owlsim.cache
@@ -113,7 +113,7 @@ $(ONTOLOGY_CONF): | $(ONTOLOGY_GRAPH)
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-ontology/conf
 
 $(SOLR_DATA): $(SOLR)
-	mkdir $(DATADIR)/solr-new
+	mkdir --parents $(DATADIR)/solr-new
 	tar -I pigz -xf $(SOLR) --no-same-owner --directory $(DATADIR)/solr-new
 	chgrp --recursive $(SOLR_GID) $(DATADIR)/solr-new
 	chmod --recursive g+w $(DATADIR)/solr-new
@@ -122,7 +122,7 @@ $(SOLR_DATA): $(SOLR)
 	mv $(DATADIR)/solr-new $(DATADIR)/solr
 
 $(MONARCH_UI_DIST): $(MONARCH_UI)
-	mkdir $(DATADIR)/monarch-ui-new
+	mkdir --parents $(DATADIR)/monarch-ui-new
 	tar -I pigz -xf $(MONARCH_UI) --no-same-owner --directory $(DATADIR)/monarch-ui-new
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/monarch-ui-new
 	chmod --recursive g+w $(DATADIR)/monarch-ui-new
