@@ -40,7 +40,7 @@ read -r -d '' TF_FILTER <<EOF
             ip: .attributes.network_interface[].access_config[].nat_ip,
             role: .attributes.metadata.role,
             services: (
-                if has(".attributes.metadata.services")
+                if .attributes.metadata | has("services")
                 then .attributes.metadata.services | fromjson
                 else [] end
             )
