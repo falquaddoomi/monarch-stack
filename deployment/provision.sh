@@ -9,6 +9,10 @@ while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
+    -h|--help)
+      echo "Usage: $0 [-d|--delete] [-a|--approve] [-n|--no-tf] <REST>"
+      exit 0
+      ;;
     -d|--delete)
       DO_DELETE="1"
       shift # past argument
@@ -28,9 +32,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ ${NO_TF} != "1" ]] && (
-    cd terraform
-    [[ ${DO_DELETE} == "1" ]] && terraform destroy ${AUTO_APPROVE}
-    terraform apply ${AUTO_APPROVE}
-)
-./ansible_on_tfinv.sh ansible/setup_swarm.yml
+(
+  [[ ${NO_TF} == "1" ]] || (
+      cd terraform
+      ( [[ ${DO_DELETE} != "1" ]] || terraform destroy ${AUTO_APPROVE} ) \
+       && terraform apply ${AUTO_APPROVE}
+  )
+) && ./ansible_on_tfinv.sh ansible/setup_swarm.yml
