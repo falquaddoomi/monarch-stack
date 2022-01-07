@@ -42,10 +42,14 @@ provider "google" {
 
 variable "base_domain" {
   default = "monarch-gcp-balanced.ddns.net"
+  type = string
+  description = "the hostname on which the swarm can be reached, used for load balancer health checks"
 }
 
-variable "machine_prefix" {
+variable "prefix" {
   default = "tf-monarch-"
+  type = string
+  description = "the prefix to put before each entity's name on creation; if empty, no prefix is used"
 }
 
 variable "services" {
@@ -74,32 +78,32 @@ variable "services" {
 }
 
 variable "manager_name" {
-  default = "tf-monarch-manager"
+  default = "manager"
 }
 
 variable "virtual_machines" {
   default = {
-    tf-monarch-manager = { 
+    manager = { 
       machine_type = "e2-small"
       role = "manager"
       services = []
     }
 
-    tf-monarch-owlsim = { 
+    owlsim = { 
       machine_type = "e2-highmem-8"
       role = "worker"
       services = ["owlsim"]
       disk_size_gb = 20
     }
 
-    tf-monarch-scigraph = { 
+    scigraph = { 
       machine_type = "e2-highmem-2"
       role = "worker"
       services = ["scigraph-data", "scigraph-ontology"]
       disk_size_gb = 90
     }
 
-    tf-monarch-solr = { 
+    solr = { 
       machine_type = "e2-standard-4"
       role = "worker"
       services = ["solr", "biolink"]

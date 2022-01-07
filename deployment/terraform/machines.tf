@@ -16,7 +16,7 @@ variable "node_image" {
 resource "google_compute_instance" "nodes" {
   for_each = var.virtual_machines
 
-  name         = "${var.machine_prefix}${each.key}"
+  name         = "${var.prefix}${each.key}"
   machine_type = each.value.machine_type
   # tags = ["http-server"]
 
