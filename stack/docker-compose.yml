@@ -39,12 +39,12 @@ services:
       - "${DATADIR}/scigraph-data/conf:/scigraph/conf"
     restart: "unless-stopped"
     command: "start-scigraph-service scigraph-data.yaml"
-    healthcheck:
-      test: "curl -f localhost:9000/scigraph/graph/HGNC%3A11027 || exit 1"
-      interval: 2m
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    # healthcheck:
+    #   test: "curl -f localhost:9000/scigraph/graph/HGNC%3A11027 || exit 1"
+    #   interval: 2m
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s
     deploy:
       placement:
         constraints:
@@ -84,6 +84,8 @@ services:
       - "${DATADIR}/owlsim:/data"
     restart: "unless-stopped"
     command: "/bin/sh -c 'export OWLTOOLS_MEMORY=59G && owltools /data/all.owl --use-fsim  --sim-load-lcs-cache /data/owlsim.cache --sim-load-ic-cache /data/ic-cache.owl --start-sim-server -p 9031'"
+    ## FA: this healthcheck is disabled b/c owlsim takes ~45min to boot up
+    ##  if it's unhealthy it causes biolink to become unhealthy, too
     # healthcheck:
     #   test: "curl -f localhost:9031/getAttributeInformationProfile || exit 1"
     #   interval: 2m
@@ -99,7 +101,7 @@ services:
           memory: 59G
 
   biolink:
-    image: monarchinitiative/biolink-api:1.1.14
+    image: falquaddoomi/biolink-api:1.1.14-py39
     ports:
       - "5000:5000"
     volumes:
@@ -110,7 +112,7 @@ services:
       - "scigraph-data"
       - "scigraph-ontology"
       - "owlsim"
-    command: ["/config/wait-for-owlsim.sh", "start-server -k gevent --worker-connections 5 --bind 0.0.0.0:5000 wsgi:app"]
+    command: ["/config/wait-for-owlsim.sh", "start-server --preload -k gevent --worker-connections 5 --bind 0.0.0.0:5000 wsgi:app"]
     deploy:
       placement:
         constraints:
