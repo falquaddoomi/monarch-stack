@@ -29,9 +29,13 @@ echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 locale-gen en_US.UTF-8
 
-# add monitoring agent
-curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh && \
-  sudo bash add-monitoring-agent-repo.sh --also-install && \
-  sudo service stackdriver-agent start
+# add monitoring agent (OLD)
+# curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh && \
+#   sudo bash add-monitoring-agent-repo.sh --also-install && \
+#   sudo service stackdriver-agent start
+
+# add monitoring agent (aka cloud ops agent)
+curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+sudo bash add-google-cloud-ops-agent-repo.sh --also-install
 
 echo $(date) > /etc/startup_was_launched
