@@ -17,6 +17,7 @@ resource "google_compute_subnetwork" "monarch_subnetwork" {
 resource "google_compute_firewall" "monarch_fw" {
   name    = "monarch-fw-allow-ssh"
   network = google_compute_network.monarch_network.id
+  source_ranges = ["0.0.0.0/0"]
 
   allow {
     protocol = "tcp"
@@ -50,6 +51,7 @@ resource "google_compute_firewall" "monarch_fw_local" {
 resource "google_compute_firewall" "monarch_fw_app" {
   name    = "monarch-fw-allow-app"
   network = google_compute_network.monarch_network.id
+  source_ranges = ["0.0.0.0/0"]
 
   allow {
     protocol = "tcp"
@@ -61,6 +63,7 @@ resource "google_compute_firewall" "monarch_fw_app" {
 resource "google_compute_firewall" "monarch_fw_app_ssl" {
   name    = "monarch-fw-allow-app-ssl"
   network = google_compute_network.monarch_network.id
+  source_ranges = ["0.0.0.0/0"]
 
   allow {
     protocol = "tcp"
