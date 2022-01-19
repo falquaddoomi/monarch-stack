@@ -24,29 +24,44 @@
 - name: Sync data for each service to /srv/monarch
   hosts: all
   become: yes
+  vars:
+    service_to_folder:
+      "scigraph-data": "scigraph-data"
+      "scigraph-ontology": "scigraph-ontology"
+      "solr": "solr"
+      "owlsim": "owlsim"
+      "ui": "monarch-ui"
   tasks:
   - name: Create /srv/monarch folder
     ansible.builtin.file:
         path: /srv/monarch/data
         state: directory
-  - name: Use Makefile targets for services to populate /srv/monarch
-    vars:
-      service_to_maketarget:
-        "scigraph-data": "fetch_scigraph_data"
-        "scigraph-ontology": "fetch_scigraph_ontology"
-        "solr": "fetch_solr"
-        "owlsim": "fetch_owlsim"
-        "ui": "fetch_ui"
-    when: hostvars[inventory_hostname].vars.services | length > 0
-    shell:
-      chdir: /srv/monarch
-      cmd: |
-        DATADIR=/srv/monarch make -f /stack/Makefile {{
-          hostvars[inventory_hostname].vars.services
-            | intersect(service_to_maketarget.keys())
-            | map('extract', vars.service_to_maketarget)
-            | join(" ")
-        }}
+  - name: Mount service disks for services
+    ansible.posix.mount:
+      path: /srv/monarch/{{ vars.service_to_folder[item] }}
+      src: /dev/disk/by-id/google-{{ item }}
+      state: mounted
+      fstype: ext4
+    loop: "{{ hostvars[inventory_hostname].vars.services | intersect(service_to_folder.keys()) }}"
+
+  # - name: Use Makefile targets for services to populate /srv/monarch
+  #   vars:
+  #     service_to_maketarget:
+  #       "scigraph-data": "fetch_scigraph_data"
+  #       "scigraph-ontology": "fetch_scigraph_ontology"
+  #       "solr": "fetch_solr"
+  #       "owlsim": "fetch_owlsim"
+  #       "ui": "fetch_ui"
+  #   when: hostvars[inventory_hostname].vars.services | length > 0
+  #   shell:
+  #     chdir: /srv/monarch
+  #     cmd: |
+  #       DATADIR=/srv/monarch make -f /stack/Makefile {{
+  #         hostvars[inventory_hostname].vars.services
+  #           | intersect(service_to_maketarget.keys())
+  #           | map('extract', vars.service_to_maketarget)
+  #           | join(" ")
+  #       }}
 
 
 - name: Ensure we have docker access to each machine

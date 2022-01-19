@@ -41,3 +41,22 @@ resource "google_compute_instance" "nodes" {
     access_config { }
   }
 }
+
+# produces a list of machine-to-service mappings for attaching service disks
+locals {
+  services_disks = flatten([
+    for vk, vm in var.virtual_machines : [
+      for svc in vm.services : { machine = vk, service = svc }
+      if contains(["owlsim", "scigraph-data", "scigraph-ontology", "solr", "ui"], svc)
+    ]
+  ])
+}
+
+# attaches disks to whichever machines requested them
+resource "google_compute_attached_disk" "disk-attachments" {
+  for_each = {for v in local.services_disks : "${v.service}-${v.machine}" => v}
+
+  disk     = "${var.prefix}${each.value.service}-servicedisk"
+  instance = "${var.prefix}${each.value.machine}"
+  device_name = "${each.value.service}"
+}

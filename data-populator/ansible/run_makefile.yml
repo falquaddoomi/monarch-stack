@@ -1,0 +1,50 @@
+- name: Install docker-stack pre-reqs, copy app to all
+  hosts: all
+  become: yes
+  tasks:
+    - name: install system prereqs
+      apt:
+        name:
+          - rsync
+          - gcc
+          - pigz
+          - wget
+          - make
+        state: present
+        update_cache: yes
+    - name: Sync app stack with target
+      ansible.posix.synchronize:
+        src: ../../stack/
+        dest: /stack
+
+- name: Sync data for each service to /srv/monarch
+  hosts: all
+  become: yes
+  vars:
+    service_disks: "{{ hostvars[inventory_hostname].vars.service_disks }}"
+  tasks:
+  - name: Create /srv/monarch folder
+    ansible.builtin.file:
+        path: /srv/monarch
+        state: directory
+
+  - name: Format disks
+    shell:
+      cmd: |
+        sudo mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard "/dev/disk/by-id/google-{{ item }}"
+    loop: "{{ hostvars[inventory_hostname].vars.services }}"
+
+  - name: Attach disks under /srv/monarch in target-specific folders
+    shell:
+      cmd: |
+        sudo mkdir -p /srv/monarch/{{ service_disks[item]['folder'] }}
+        sudo mount -o discard,defaults "/dev/disk/by-id/google-{{ item }}" "/srv/monarch/{{ service_disks[item]['folder'] }}"
+    loop: "{{ hostvars[inventory_hostname].vars.services }}"
+
+  - name: Use Makefile targets for services to populate /srv/monarch
+    shell:
+      chdir: /srv/monarch
+      cmd: |
+        DATADIR=/srv/monarch make -f /stack/Makefile_fresh {{
+          hostvars[inventory_hostname].vars.targets | join(" ")
+        }}
