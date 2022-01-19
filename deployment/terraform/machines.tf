@@ -24,6 +24,7 @@ resource "google_compute_instance" "nodes" {
     initialize_params {
       image = var.node_image
       size = try(each.value.disk_size_gb, 10)
+      type = try(each.value.disk_type, "pd-balanced")
     }
   }
 

@@ -100,14 +100,16 @@ variable "virtual_machines" {
       machine_type = "e2-highmem-2"
       role = "worker"
       services = ["scigraph-data", "scigraph-ontology"]
-      disk_size_gb = 90
+      disk_size_gb = 125 # 107GB in /srv/monarch, 111GB total
+      disk_type = "pd-standard"
     }
 
     solr = { 
       machine_type = "e2-standard-4"
       role = "worker"
-      services = ["solr", "biolink"]
-      disk_size_gb = 160
+      services = ["solr", "biolink", "ui"]
+      disk_size_gb = 250 # 223GB in /srv/monarch, 228GB total
+      disk_type = "pd-standard"
     }
   }
 }
