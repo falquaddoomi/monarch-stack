@@ -155,7 +155,7 @@ module "lb-http" {
           unhealthy_threshold = 0
           request_path        = desc.healthcheck_path
           port                = desc.port
-          host                = google_compute_instance.nodes[var.manager_name].network_interface[0].network_ip
+          host                = google_compute_instance.nodes["${var.prefix}${var.manager_name}"].network_interface[0].network_ip
           logging             = false
         }
 
