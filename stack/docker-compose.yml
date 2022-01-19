@@ -37,7 +37,6 @@ services:
     volumes:
       - "${DATADIR}/scigraph-data/data:/data"
       - "${DATADIR}/scigraph-data/conf:/scigraph/conf"
-      - "/tmp/sg-data:/data/graph/logs" # maps log folder to writeable loc since DATADIR is read-only
     restart: "unless-stopped"
     command: "start-scigraph-service scigraph-data.yaml"
     healthcheck:
@@ -61,7 +60,6 @@ services:
     volumes:
       - "${DATADIR}/scigraph-ontology/data:/data"
       - "${DATADIR}/scigraph-ontology/conf:/scigraph/conf"
-      - "/tmp/sg-onto:/data/graph/logs" # maps log folder to writeable loc since DATADIR is read-only
     restart: "unless-stopped"
     command: "start-scigraph-service scigraph-ontology.yaml"
     healthcheck:
