@@ -51,7 +51,7 @@ services:
           - "node.labels.scigraph-data_svc == true"
       resources:
         reservations:
-          memory: 6G
+          memory: 12G
         
   scigraph-ontology:
     image: monarchinitiative/scigraph:2.2

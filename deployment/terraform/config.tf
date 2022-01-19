@@ -97,7 +97,7 @@ variable "virtual_machines" {
     }
 
     scigraph = { 
-      machine_type = "e2-highmem-2"
+      machine_type = "e2-highmem-4"
       role = "worker"
       services = ["scigraph-data", "scigraph-ontology"]
       disk_size_gb = 125 # 107GB in /srv/monarch, 111GB total
