@@ -79,11 +79,14 @@
 - name: Annotate each node with its services
   hosts: manager
   become: yes
+  gather_facts: false
   tasks:
     - name: Annotate nodes
       shell: |
         docker node update --label-add {{ item.1 }}_svc=true {{ item.0.key }}
       loop: "{{ hostvars | dict2items | subelements('value.vars.services') }}"
+      loop_control:
+        label: "{{ item.0.key }}"
 
 - name: Deploy swarm app
   import_playbook: setup_monarch_app.yml
