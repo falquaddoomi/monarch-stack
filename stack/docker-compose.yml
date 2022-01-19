@@ -134,7 +134,7 @@ services:
     deploy:
       placement:
         constraints:
-          - "node.labels.biolink_svc == true"
+          - "node.labels.ui_svc == true"
 
   balancer:
     image: 127.0.0.1:5015/balancer:0.0.3
