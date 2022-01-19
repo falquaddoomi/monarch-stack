@@ -35,6 +35,8 @@ resource "google_compute_instance" "nodes" {
       services = jsonencode(try(each.value.services, []))
   }
 
+  lifecycle { ignore_changes = [attached_disk] }
+
   network_interface {
     network = google_compute_network.monarch_network.id
     subnetwork   = google_compute_subnetwork.monarch_subnetwork.id
@@ -57,6 +59,6 @@ resource "google_compute_attached_disk" "disk-attachments" {
   for_each = {for v in local.services_disks : "${v.service}-${v.machine}" => v}
 
   disk     = "${var.prefix}${each.value.service}-servicedisk"
-  instance = "${var.prefix}${each.value.machine}"
+  instance = google_compute_instance.nodes[each.value.machine].id
   device_name = "${each.value.service}"
 }
