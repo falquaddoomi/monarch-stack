@@ -18,7 +18,7 @@ resource "google_compute_instance" "nodes" {
 
   name         = "${var.prefix}${each.key}"
   machine_type = each.value.machine_type
-  # tags = ["http-server"]
+  tags = try(each.value.tags, [])
 
   boot_disk {
     initialize_params {
