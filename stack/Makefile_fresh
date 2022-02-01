@@ -78,7 +78,7 @@ $(SOLR):
 	chgrp $(MONARCH_GID) $@
 
 $(MONARCH_UI):
-	cd $(DATADIR) && $(WGET) $(UI_RELEASE)
+	cd $(TMPDIR) && $(WGET) $(UI_RELEASE)
 	chgrp $(MONARCH_GID) $@
 
 $(OWLSIM_FILES):
@@ -94,13 +94,13 @@ $(DATA_GRAPH): $(SCIGRAPH_DATA)
 	mkdir --parents $(DATADIR)/scigraph-data/data
 	tar -I pigz -xf $(SCIGRAPH_DATA) --no-same-owner --directory $(DATADIR)/scigraph-data/data
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-data
-	chmod --recursive g+w $(DATADIR)/scigraph-data
+	chmod --recursive g+rw $(DATADIR)/scigraph-data
 
 $(ONTOLOGY_GRAPH): $(SCIGRAPH_ONTOLOGY)
 	mkdir --parents $(DATADIR)/scigraph-ontology/data
 	tar -I pigz -xf $(SCIGRAPH_ONTOLOGY) --no-same-owner --directory $(DATADIR)/scigraph-ontology/data
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-ontology
-	chmod --recursive g+w $(DATADIR)/scigraph-ontology
+	chmod --recursive g+rw $(DATADIR)/scigraph-ontology
 
 $(DATA_CONF): | $(DATA_GRAPH)
 	mkdir --parents $(DATADIR)/scigraph-data/conf
@@ -116,10 +116,10 @@ $(SOLR_DATA): $(SOLR)
 	mkdir --parents $(DATADIR)/solr
 	tar -I pigz -xf $(SOLR) --no-same-owner --directory $(DATADIR)/solr
 	chgrp --recursive $(SOLR_GID) $(DATADIR)/solr
-	chmod --recursive g+w $(DATADIR)/solr
+	chmod --recursive g+rw $(DATADIR)/solr
 
 $(MONARCH_UI_DIST): $(MONARCH_UI)
 	mkdir --parents $(DATADIR)/monarch-ui
 	tar -I pigz -xf $(MONARCH_UI) --no-same-owner --directory $(DATADIR)/monarch-ui
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/monarch-ui
-	chmod --recursive g+w $(DATADIR)/monarch-ui
+	chmod --recursive g+rw $(DATADIR)/monarch-ui
