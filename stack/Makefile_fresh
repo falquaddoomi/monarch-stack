@@ -14,6 +14,7 @@ UI_RELEASE ?= https://github.com/monarch-initiative/monarch-ui/releases/latest/d
 
 DATADIR ?= ./data
 TMPDIR ?= /tmp
+SCIGRAPH_UID ?= 1006
 MONARCH_GID ?= 14728
 SOLR_GID ?= 8983
 
@@ -95,22 +96,26 @@ $(DATA_GRAPH): $(SCIGRAPH_DATA)
 	tar -I pigz -xf $(SCIGRAPH_DATA) --no-same-owner --directory $(DATADIR)/scigraph-data/data
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-data
 	chmod --recursive g+rw $(DATADIR)/scigraph-data
+	chown --recursive $(SCIGRAPH_UID):$(SCIGRAPH_UID) $(DATADIR)/scigraph-data
 
 $(ONTOLOGY_GRAPH): $(SCIGRAPH_ONTOLOGY)
 	mkdir --parents $(DATADIR)/scigraph-ontology/data
 	tar -I pigz -xf $(SCIGRAPH_ONTOLOGY) --no-same-owner --directory $(DATADIR)/scigraph-ontology/data
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-ontology
 	chmod --recursive g+rw $(DATADIR)/scigraph-ontology
+	chown --recursive $(SCIGRAPH_UID):$(SCIGRAPH_UID) $(DATADIR)/scigraph-ontology
 
 $(DATA_CONF): | $(DATA_GRAPH)
 	mkdir --parents $(DATADIR)/scigraph-data/conf
 	cd $(DATADIR)/scigraph-data/conf && $(WGET) $(ARCHIVE)/conf/scigraph-data.yaml
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-data/conf
+	chown --recursive $(SCIGRAPH_UID):$(SCIGRAPH_UID) $(DATADIR)/scigraph-data/conf
 
 $(ONTOLOGY_CONF): | $(ONTOLOGY_GRAPH)
 	mkdir --parents $(DATADIR)/scigraph-ontology/conf
 	cd $(DATADIR)/scigraph-ontology/conf && $(WGET) $(ARCHIVE)/conf/scigraph-ontology.yaml
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-ontology/conf
+	chown --recursive $(SCIGRAPH_UID):$(SCIGRAPH_UID) $(DATADIR)/scigraph-ontology/conf
 
 $(SOLR_DATA): $(SOLR)
 	mkdir --parents $(DATADIR)/solr
