@@ -2,6 +2,7 @@
 
 DO_DELETE=0
 NO_TF=0
+NO_TF_APPLY=0
 AUTO_APPROVE=""
 
 POSITIONAL=()
@@ -21,6 +22,10 @@ while [[ $# -gt 0 ]]; do
       AUTO_APPROVE="-auto-approve"
       shift # past argument
       ;;
+    -na|--no-tf-apply) # skip tf apply
+      NO_TF_APPLY="1"
+      shift
+      ;;
     -n|--no-tf) # skip anything tf-related
       NO_TF="1"
       shift
@@ -35,7 +40,10 @@ done
 (
   [[ ${NO_TF} == "1" ]] || (
       cd terraform
-      ( [[ ${DO_DELETE} != "1" ]] || terraform destroy ${AUTO_APPROVE} ) \
-       && terraform apply ${AUTO_APPROVE}
+      ( [[ ${DO_DELETE}   != "1" ]] || terraform destroy ${AUTO_APPROVE} ) && \
+      ( [[ ${NO_TF_APPLY} == "1" ]] || terraform apply ${AUTO_APPROVE} )
   )
-) && ./ansible_on_tfinv.sh ansible/setup_swarm.yml
+) && (
+  [[ ${NO_TF_APPLY} == "1" ]] && echo '*** aborting without running ansible b/c nothing was applied' || \
+  ./ansible_on_tfinv.sh ansible/setup_swarm.yml
+)
