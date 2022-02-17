@@ -76,7 +76,8 @@ echo "* Provisioning starting at $( date )..."
 # despite exit status, attempt to destroy the populator and the network
 # (but, critically, not the disks)
 [[ ${NO_CLEANUP} == "1" ]] || (
-terraform destroy ${AUTO_APPROVE} \
-  -target google_compute_instance.populator \
-  -target google_compute_network.populator_network
+  cd terraform
+  terraform destroy ${AUTO_APPROVE} \
+    -target google_compute_instance.populator \
+    -target google_compute_network.populator_network
 )
