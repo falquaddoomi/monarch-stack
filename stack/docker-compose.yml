@@ -31,7 +31,9 @@ services:
           memory: 12G
       
   scigraph-data:
-    image: monarchinitiative/scigraph:2.2
+    # image: monarchinitiative/scigraph:2.2
+    image: us-central1-docker.pkg.dev/monarch-initiative/monarch-initiative/scigraph:dev
+    # image: 127.0.0.1:5015/scigraph-test:2.2-ish
     ports:
       - "9000:9000"
     volumes:
@@ -39,12 +41,12 @@ services:
       - "${DATADIR}/scigraph-data/conf:/scigraph/conf"
     restart: "unless-stopped"
     command: "start-scigraph-service scigraph-data.yaml"
-    # healthcheck:
-    #   test: "curl -f localhost:9000/scigraph/graph/HGNC%3A11027 || exit 1"
-    #   interval: 2m
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 60s
+    healthcheck:
+      test: "curl -f localhost:9000/scigraph/graph/HGNC%3A11027 || exit 1"
+      interval: 10m
+      timeout: 5m
+      retries: 3
+      start_period: 5m
     deploy:
       placement:
         constraints:
@@ -52,9 +54,14 @@ services:
       resources:
         reservations:
           memory: 12G
-        
+      restart_policy:
+        delay: 30s
+        window: 120s
+
   scigraph-ontology:
-    image: monarchinitiative/scigraph:2.2
+    # image: monarchinitiative/scigraph:2.2
+    image: us-central1-docker.pkg.dev/monarch-initiative/monarch-initiative/scigraph:dev
+    # image: 127.0.0.1:5015/scigraph-test:2.2-ish
     ports:
       - "9090:9000"
     volumes:
@@ -75,6 +82,9 @@ services:
       resources:
         reservations:
           memory: 6G
+      restart_policy:
+        delay: 30s
+        window: 120s
   
   owlsim:
     image: monarchinitiative/owlsim:0.3.0
