@@ -3,7 +3,7 @@ MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-builtin-variables
 
 # Monarch release versions
-ARCHIVE ?= https://data-test.monarchinitiative.org/monarch/202109
+ARCHIVE ?= gs://data-test.monarchinitiative.org/latest
 UI_RELEASE ?= https://github.com/monarch-initiative/monarch-ui/releases/latest/download/static-assets.tar.gz
 
 DATADIR ?= ./data
@@ -12,7 +12,7 @@ SOLR_GID ?= 8983
 
 
 WGET = /usr/bin/wget --timestamping --no-verbose
-
+GSUTIL = gsutil cp
 SOLR = $(DATADIR)/solr.tgz
 
 OWLSIM_FILES = \
@@ -59,15 +59,15 @@ fetch_owlsim: $(OWLSIM_FILES)
 
 
 $(SCIGRAPH_DATA):
-	cd $(DATADIR) && $(WGET) $(ARCHIVE)/scigraph.tgz
+	cd $(DATADIR) && $(GSUTIL) $(ARCHIVE)/scigraph.tgz .
 	chgrp $(MONARCH_GID) $@
 
 $(SCIGRAPH_ONTOLOGY):
-	cd $(DATADIR) && $(WGET) $(ARCHIVE)/scigraph-ontology.tgz
+	cd $(DATADIR) && $(GSUTIL) $(ARCHIVE)/scigraph-ontology.tgz .
 	chgrp $(MONARCH_GID) $@
 
 $(SOLR):
-	cd $(DATADIR) && $(WGET) $(ARCHIVE)/solr.tgz
+	cd $(DATADIR) && $(GSUTIL) $(ARCHIVE)/solr.tgz .
 	chgrp $(MONARCH_GID) $@
 
 $(MONARCH_UI):
@@ -76,9 +76,9 @@ $(MONARCH_UI):
 
 $(OWLSIM_FILES):
 	mkdir --parents $(DATADIR)/owlsim-new
-	cd $(DATADIR)/owlsim-new && $(WGET) $(ARCHIVE)/owlsim/all.owl
-	cd $(DATADIR)/owlsim-new && $(WGET) $(ARCHIVE)/owlsim/ic-cache.owl
-	cd $(DATADIR)/owlsim-new && $(WGET) $(ARCHIVE)/owlsim/owlsim.cache
+	cd $(DATADIR)/owlsim-new && $(GSUTIL) $(ARCHIVE)/owlsim/all.owl .
+	cd $(DATADIR)/owlsim-new && $(GSUTIL) $(ARCHIVE)/owlsim/ic-cache.owl .
+	cd $(DATADIR)/owlsim-new && $(GSUTIL) $(ARCHIVE)/owlsim/owlsim.cache .
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/owlsim-new
 	rm -rf $(DATADIR)/owlsim-old
 	mv $(DATADIR)/owlsim $(DATADIR)/owlsim-old || true
@@ -104,12 +104,12 @@ $(ONTOLOGY_GRAPH): $(SCIGRAPH_ONTOLOGY)
 
 $(DATA_CONF): | $(DATA_GRAPH)
 	mkdir --parents $(DATADIR)/scigraph-data/conf
-	cd $(DATADIR)/scigraph-data/conf && $(WGET) $(ARCHIVE)/conf/scigraph-data.yaml
+	cd $(DATADIR)/scigraph-data/conf && $(GSUTIL) $(ARCHIVE)/conf/scigraph-data.yaml .
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-data/conf
 
 $(ONTOLOGY_CONF): | $(ONTOLOGY_GRAPH)
 	mkdir --parents $(DATADIR)/scigraph-ontology/conf
-	cd $(DATADIR)/scigraph-ontology/conf && $(WGET) $(ARCHIVE)/conf/scigraph-ontology.yaml
+	cd $(DATADIR)/scigraph-ontology/conf && $(GSUTIL) $(ARCHIVE)/conf/scigraph-ontology.yaml .
 	chgrp --recursive $(MONARCH_GID) $(DATADIR)/scigraph-ontology/conf
 
 $(SOLR_DATA): $(SOLR)
