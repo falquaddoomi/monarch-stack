@@ -1,103 +1,94 @@
-### monarch-stack
-Specification for deploying monarch services with docker-compose
+# monarch-stack
 
-<!-- MarkdownTOC -->
+This repo contains tooling to provision and deploy the Monarch stack.
 
-- [Host Environment](#host-environment)
-- [Downloading Service Data and Configs](#downloading-service-data-and-configs)
-  - [Fetching all data](#fetching-all-data)
-  - [Directory structure](#directory-structure)
-  - [Fetching data for a single service](#fetching-data-for-a-single-service)
-- [Running Docker Compose](#running-docker-compose)
-- [Testing](#testing)
+The stack relies on [Terraform](https://www.terraform.io/) to provision cloud
+resources, currently on Google Cloud (aka "GCP"). Once Terraform has provisoned
+virtual machines ("VMs" or "nodes") to run the services,
+[Ansible](https://www.ansible.com/) is then used to install Docker on each VM,
+then join the VMs to a [Docker Swarm](https://docs.docker.com/engine/swarm/).
+Swarm is used to schedule the containers that make up the Monarch stack on each
+VM. Services that share data are scheduled on the same VM, as are services that
+are too small on their own to warrant their own VM.
 
-<!-- /MarkdownTOC -->
+You can run these provisioning scripts from wherever you like, be it your local
+machine or a 
 
-### Host Environment
+## Prerequisites
 
-The docker-compose commands require a host with the following:
-- Docker Engine > 19.03.0
-- Docker Compose > 1.25.5
-- User in the docker group, with group access to GIDs 8983 (solr) and 14728 (scigraph)
-- Directory with > 500 GB space to store current and previous data releases
+You must have Terraform and Ansible installed, and you'll likely also need
+Python, as Ansible depends on it.
 
-### Downloading Service Data and Configs
+You may want to install Docker Desktop if you want to run the stack locally. You
+may also want to have the gcloud cli installed if you want to manipulate GCP
+resources without having to go through Terraform.
 
-Data and configuration files can be downloaded by running make.  If running directly on
-the host this will require gcc and pigz.  Alternatively, this can be run with 
-[docker](https://hub.docker.com/repository/docker/monarchinitiative/gcc-pigz)
+- [Terraform installation](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+- [Ansible installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+- [Docker Desktop installation](https://docs.docker.com/desktop/) (expand
+  "Install Docker Desktop" in the topic browser, then select the subtopic for
+  your platform)
+- [gcloud CLI installation](https://cloud.google.com/sdk/docs/install)
 
-#### Fetching all data
+## Initialization
 
-```
-ARCHIVE=https://archive.monarchinitiative.org/202003 \
-UI_RELEASE=https://github.com/monarch-initiative/monarch-ui/releases/download/v1.0.2/static-assets.tar.gz \
-DATADIR=./data \
-make all
-```
+First, enter `/deployment/terraform/` and run `terraform init`, which will
+download the GCP terraform provider among other setup functions.
 
-Or with docker:
+Next, you'll need to obtain a service account keyfile, which will allow
+Terraform to manage GCP resources on your behalf; see `/.secrets/README.md` for
+information on how to obtain the keyfile and modify the Terraform config to use
+the keyfile.
 
-```
-docker run \ 
-     --workdir /usr/src/ \
-     --volume `pwd`:/usr/src/ \
-     monarchinitiative/gcc-pigz:10.1  \
-        /bin/sh -c 'umask 0002 && \
-          ARCHIVE=https://archive.monarchinitiative.org/202003 \
-          UI_RELEASE=https://github.com/monarch-initiative/monarch-ui/releases/download/v1.0.2/static-assets.tar.gz \
-          DATADIR=/srv/monarch \
-          make'
-```
+## Configuration
 
-#### Directory structure
+There are three places where you'll likely be making changes to customize the
+stack:
+- `deployment/terraform.tfvars`: a terraform file of variable definitions that
+  specifies, among other things, the prefix for the stack you're setting up,
+  and the VMs along with their metadata (e.g., the type of VM, like “e2-small”,
+  its boot disk size, its role — worker or manager, and its services as a list
+  of strings). Note that these variables can be overridden by environment
+  variables, if you find that more convenient; see the following for details:
+  [Input Variables: Environment
+  Variables](https://developer.hashicorp.com/terraform/language/values/variables#environment-variables)
+- `stack/Makefile`: a Makefile that gets executed on each VM. Currently,
+  services are mapped to targets in this Makefile in the file
+  `deployment/ansible/setup_stack_app.yml`. Search for where the dict variable
+  `service_to_maketarget` is specified, then add your service name as the key
+   and the target as the value. Ostensibly, the target fetches data that the
+   service depends on before it can start; for example, `fetch_solr` downloads
+   and unpacks a database that Solr uses to initialize itself at first run.
+- `stack/docker-compose.yml`: a docker compose file where you specify the
+  containers you want to run and how they’ll be mapped to VMs
 
-The data directory will have the following structure:
 
-/path/to/data/
-  - solr/
-  - solr-old/
-  - scigraph-data/
-  - scigraph-data-old/
-  - scigraph-ontology/
-  - scigraph-ontology-old/
-  - owlsim/
-  - owlsim-old/
-  - monarch-ui/
-  - monarch-ui-old/
+### How Resource Prefixes Are Derived
 
-Each directory contains data and configuration files needed for the Monarch services.
-The -old directories contain the files for the previous run of make or will be empty if
-this is the first time running make.
+In order to keep resources created by this stack from clashing with existing
+resources, a prefix is used to implicitly namespace the resources on Google
+Cloud. The Terraform variable `prefix` is used to set this value. The prefix is
+prepended as-is, so it's recommended to put a delimiter, e.g. "-", at the end of
+the name. For example, if prefix was `tf-monarch-` (the default value), the
+manager VM, whose name is `manager`, would be named `tf-monarch-manager`.
 
-#### Fetching data for a single service
+## Usage
 
-Data for a single service can be fetched by changing the make target:
+To set up the service VMs, enter `deployment` and run the script
+`./provision.sh`. Execution will roughly follow this process:
 
-```
-make fetch_solr
-```
+1. First, terraform will run, and will compare the desired resources to what's
+currently deployed; if this is the first time running the script, you'll only
+see additions, but if you've run it before you might also see removals or
+changes if you've changed your terraform config since the last time you ran it.
+You'll be asked for your approval, and must explicitly answer `yes` for
+resources to be provisioned.
 
-See ```make list``` to view all targets
+2. Once terraform has set up cloud resources, Ansible will run using terraform's
+output to populate its inventory of virtual machines. Ansible will set up each
+node to run Docker, including Docker Swarm, and will peform role-specific setup
+on each VM. For example, the VM designated as the manager will start the swarm,
+and nodes designated as workers will join it.
 
-### Running Docker Compose
-
-All Monarch services can be composed by running
-```
-DATADIR=/path/to/data/ docker-compose up
-```
-Note that owlsim takes 12 minutes to initialize, followed by a warm up query generated
-by the biolink container which takes an additional ~20 minutes.
-
-In practice, our backend services change infrequently so it is useful to separate 
-data providing backend services (solr, scigraph-data, scigraph-ontology, owlsim) and
-our API and front end (biolink, monarch-ui).  Therefore, these can be composed independently:
-
-```
-DATADIR=/path/to/data docker-compose -f services/monarch-app.yml up
-DATADIR=/path/to/data docker-compose -f services/backend.yml up
-```
-
-### Testing
-
-Tests are a WIP, but the services/ compose files contain healthchecks.
+3. Once all the prerequisities are set up on the nodes, the Monarch stack will
+be deployed to the swarm using the `docker-compose.yml` file in `stack`.
