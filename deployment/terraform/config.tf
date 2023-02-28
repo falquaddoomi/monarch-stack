@@ -15,8 +15,13 @@ variable "zone" {
 }
 
 variable "credentials_file" {
-    # default = ".secrets/monarch-initiative-bd310387f7b1.json"
-    default = ".secrets/monarch-initiative-a9a59050572d.json"
+  type = string
+  description = "The path to a credentials file for a user/service account with permission to edit resources in your target project"
+}
+
+variable "svc_account_id" {
+  type = string
+  description = "The ID (either email or unique ID) of the service account under which the VMs will run"
 }
 
 terraform {
@@ -40,45 +45,10 @@ provider "google" {
 # --- stack-specific inputs
 # ---------------------------------------------------------------------------------------------------
 
-variable "base_domain" {
-  default = "monarch-gcp-balanced.ddns.net"
-  type = string
-  description = "the hostname on which the swarm can be reached, used for load balancer health checks"
-}
-
 variable "prefix" {
   default = "tf-monarch-"
   type = string
   description = "the prefix to put before each entity's name on creation; if empty, no prefix is used"
-}
-
-variable "services" {
-  default = {
-    "biolink" = {
-      port = 5000
-      healthcheck_path = "/"
-    }
-    "owlsim" = {
-      port = 9031
-      healthcheck_path = "/"
-    }
-    "solr" = {
-      port = 8983
-      healthcheck_path = "/solr/#/"
-    }
-    "scigraph-data" = {
-      port = 9000
-      healthcheck_path = "/scigraph/docs/"
-    }
-    "scigraph-ontology" = {
-      port = 9090
-      healthcheck_path = "/scigraph/docs/"
-    }
-  }
-}
-
-variable "manager_name" {
-  default = "manager"
 }
 
 variable "virtual_machines" {

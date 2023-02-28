@@ -57,14 +57,14 @@
           {{ item }} -- sudo usermod -a -G docker $USER
       loop: "{{ groups['all'] }}"
 
-- name: Copy letsencrypt to manager
-  hosts: manager
-  become: yes
-  tasks:
-    - name: Sync letsencrypt to balancer node
-      ansible.posix.synchronize:
-        src: ./.secrets/letsencrypt
-        dest: /etc
+# - name: Copy letsencrypt to manager
+#   hosts: manager
+#   become: yes
+#   tasks:
+#     - name: Sync letsencrypt to balancer node
+#       ansible.posix.synchronize:
+#         src: ./.secrets/letsencrypt
+#         dest: /etc
 
 - name: Create local registry, build custom images, deploy stack
   hosts: manager

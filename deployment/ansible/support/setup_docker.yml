@@ -38,6 +38,31 @@
       update_cache: yes
     tags:
       - docker
+  - name: Check if daemon.json already exists, and skip creating it if so
+    tags:
+      - docker
+    stat:
+      path: /etc/docker/daemon.json
+    register: daemon_file
+  - name: Set up docker daemon.json that enables ipv6
+    tags:
+      - docker
+    when: not daemon_file.stat.exists
+    block:
+      - name: Ensure path to daemon.json exists
+        file:
+          path: /etc/docker
+          recurse: true
+          state: directory
+      - name: Create docker daemon.json that enables ipv6
+        copy:
+          dest: /etc/docker/daemon.json
+          force: false
+          content: |
+            {
+              "ipv6": true,
+              "fixed-cidr-v6": "{{ outputs['internal_ipv6_range'] }}"
+            }
   - name: Install docker
     apt:
       name:

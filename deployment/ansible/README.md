@@ -19,7 +19,6 @@ The playbooks implement the following tasks:
     - installs dependencies for the deployment process (rsync, jsondiff, pyyaml)
     - copies `<ROOT>/stack` to each host (at `/stack` on the host), since it contains config for multiple hosts
     - puts the current user in the `docker` group on each host
-    - syncs letsencrypt certs to the manager node, for the SSL terminating balancer
     - creates a Docker registry service on the swarm for hosting custom images
     - builds the `<ROOT>/stack/docker-images/balancer` image, then pushes it to the registry
     - deploys the monarch stack to the swarm using `<ROOT>/stack/docker-compose.yml`
