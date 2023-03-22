@@ -37,7 +37,7 @@ read -r -d '' TF_FILTER <<EOF
         map(select(.type == "google_compute_instance")) |
         .[].instances | .[] | {
             name: .attributes.name,
-            ip: .attributes.network_interface[].access_config[].nat_ip,
+            ip: .attributes.network_interface[].network_ip,
             role: .attributes.metadata.role,
             services: (
                 if .attributes.metadata | has("services")
